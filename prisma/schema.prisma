@@ -1,0 +1,547 @@
+// Plateforme de révision — Collège Saint-Joseph d'Argenteuil
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_PEDA
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ContentStatus {
+  DRAFT
+  VALIDATED
+}
+
+enum ContentSource {
+  MANUAL
+  AI
+  LEGACY
+}
+
+enum EvaluationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Step {
+  MEMORIZE
+  PRACTICE
+  EXAM
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  FILL_BLANK
+  ORDER
+  MATCH
+  CATEGORIZE
+  NUMERIC
+  TIMELINE
+  IMAGE_POINT
+  OPEN
+}
+
+enum AttemptKind {
+  PRACTICE
+  MEMORIZE
+  MOCK_EXAM
+  REINFORCEMENT
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  PENDING_REVIEW
+  GRADED
+}
+
+enum ReviewStatus {
+  AUTO
+  PENDING
+  AI_SUGGESTED
+  VALIDATED
+}
+
+enum RightsStatus {
+  UNVERIFIED
+  AUTHORIZED
+  INTERNAL_ONLY
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  SUSPENDED
+  ENDED
+}
+
+enum PaymentStatus {
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum DataRequestType {
+  ACCESS
+  DELETION
+  RECTIFICATION
+}
+
+enum DataRequestStatus {
+  OPEN
+  DONE
+  REJECTED
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String?       @unique
+  username         String?       @unique
+  passwordHash     String
+  role             Role
+  status           AccountStatus @default(ACTIVE)
+  firstName        String
+  lastName         String        @default("")
+  parentId         String?
+  parent           User?         @relation("ParentChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children         User[]        @relation("ParentChildren")
+  gradeLevelId     String?
+  gradeLevel       GradeLevel?   @relation(fields: [gradeLevelId], references: [id])
+  stripeCustomerId String?       @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  lastLoginAt      DateTime?
+
+  sessions          Session[]
+  answers           Answer[]
+  attempts          Attempt[]
+  flashcardReviews  FlashcardReview[]
+  xpEvents          XpEvent[]
+  badges            UserBadge[]
+  goals             StudentGoal[]
+  subscriptionsPaid Subscription[]    @relation("SubscriptionParent")
+  subscriptionsFor  Subscription[]    @relation("SubscriptionStudent")
+  payments          Payment[]
+  consents          Consent[]
+  dataRequests      DataRequest[]
+  teacherSubjects   TeacherSubject[]
+  auditLogs         AuditLog[]
+}
+
+model Session {
+  id         String   @id // sha256 du jeton, le jeton brut n'est jamais stocké
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  userAgent  String?
+}
+
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  identifier String
+  ip         String?
+  success    Boolean
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, createdAt])
+}
+
+model GradeLevel {
+  id       String    @id @default(cuid())
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  visible  Boolean   @default(true)
+  subjects Subject[]
+  students User[]
+}
+
+model Subject {
+  id           String           @id @default(cuid())
+  gradeLevelId String
+  gradeLevel   GradeLevel       @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  icon         String           @default("📘")
+  color        String           @default("#1f3a68")
+  order        Int              @default(0)
+  visible      Boolean          @default(true)
+  evaluations  Evaluation[]
+  teachers     TeacherSubject[]
+
+  @@unique([gradeLevelId, slug])
+}
+
+model TeacherSubject {
+  userId    String
+  subjectId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, subjectId])
+}
+
+model Evaluation {
+  id             String           @id @default(cuid())
+  subjectId      String
+  subject        Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  title          String
+  examDate       DateTime?
+  teacherName    String?
+  showTeacher    Boolean          @default(true)
+  chapters       Json             @default("[]") // string[]
+  objectives     Json             @default("[]") // string[]
+  status         EvaluationStatus @default(DRAFT)
+  schoolYear     String           @default("2026-2027")
+  copiedFromId   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  publishedAt    DateTime?
+
+  notions        Notion[]
+  documents      Document[]
+  learnBlocks    LearnBlock[]
+  flashcards     Flashcard[]
+  questions      Question[]
+  mockExams      MockExam[]
+  attempts       Attempt[]
+  aiGenerations  AiGeneration[]
+  goals          StudentGoal[]
+}
+
+model Notion {
+  id           String     @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  name         String
+  order        Int        @default(0)
+  flashcards   Flashcard[]
+  questions    Question[]
+  learnBlocks  LearnBlock[]
+}
+
+model Document {
+  id                String       @id @default(cuid())
+  evaluationId      String
+  evaluation        Evaluation   @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  title             String
+  kind              String       // FILE | LINK
+  filename          String?
+  mimeType          String?
+  size              Int?
+  storageKey        String?      // chemin relatif dans le stockage privé
+  url               String?      // lien externe (Digipad, vidéo...)
+  embeddable        Boolean      @default(false)
+  visibleToStudents Boolean      @default(false)
+  rightsStatus      RightsStatus @default(UNVERIFIED)
+  rightsNote        String?
+  extractedText     String?
+  extractionNote    String?
+  createdById       String?
+  createdAt         DateTime     @default(now())
+}
+
+model LearnBlock {
+  id           String        @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  notionId     String?
+  notion       Notion?       @relation(fields: [notionId], references: [id], onDelete: SetNull)
+  order        Int           @default(0)
+  type         String        // TEXT | DEFINITIONS | TIMELINE | TABLE | EXAMPLE | MEDIA | KEYPOINTS
+  title        String
+  data         Json
+  status       ContentStatus @default(DRAFT)
+  source       ContentSource @default(MANUAL)
+  sourceRef    String?
+  updatedAt    DateTime      @updatedAt
+}
+
+model Flashcard {
+  id           String            @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation        @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  notionId     String?
+  notion       Notion?           @relation(fields: [notionId], references: [id], onDelete: SetNull)
+  front        String
+  back         String
+  order        Int               @default(0)
+  status       ContentStatus     @default(DRAFT)
+  source       ContentSource     @default(MANUAL)
+  sourceRef    String?
+  reviews      FlashcardReview[]
+}
+
+model Question {
+  id           String        @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  mockExamId   String?
+  mockExam     MockExam?     @relation(fields: [mockExamId], references: [id], onDelete: Cascade)
+  notionId     String?
+  notion       Notion?       @relation(fields: [notionId], references: [id], onDelete: SetNull)
+  step         Step
+  type         QuestionType
+  prompt       String
+  context      Json?         // { text?, imageUrl?, source?, chart? }
+  data         Json          // paramètres et réponse attendue selon le type
+  explanation  String        @default("")
+  method       String        @default("")
+  points       Float         @default(1)
+  variantGroup String?       // contrôle blanc : une question tirée par groupe
+  order        Int           @default(0)
+  status       ContentStatus @default(DRAFT)
+  source       ContentSource @default(MANUAL)
+  sourceRef    String?
+  answers      Answer[]
+}
+
+model MockExam {
+  id           String        @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  title        String
+  instructions String        @default("")
+  durationMin  Int           @default(45)
+  status       ContentStatus @default(DRAFT)
+  source       ContentSource @default(MANUAL)
+  questions    Question[]
+  attempts     Attempt[]
+}
+
+model Attempt {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluationId  String
+  evaluation    Evaluation    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  mockExamId    String?
+  mockExam      MockExam?     @relation(fields: [mockExamId], references: [id], onDelete: SetNull)
+  kind          AttemptKind
+  status        AttemptStatus @default(IN_PROGRESS)
+  questionIds   Json          @default("[]")
+  startedAt     DateTime      @default(now())
+  deadlineAt    DateTime?
+  submittedAt   DateTime?
+  autoPoints    Float?
+  pendingPoints Float?
+  maxPoints     Float?
+  scoreOn20     Float?        // renseigné uniquement quand toutes les réponses sont corrigées
+  answers       Answer[]
+}
+
+model Answer {
+  id            String       @id @default(cuid())
+  attemptId     String?
+  attempt       Attempt?     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  response      Json
+  isCorrect     Boolean?
+  pointsAwarded Float?
+  maxPoints     Float
+  reviewStatus  ReviewStatus @default(AUTO)
+  aiSuggestion  Json?
+  reviewerNote  String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([userId, questionId])
+}
+
+model FlashcardReview {
+  userId      String
+  flashcardId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  box         Int       @default(1)
+  dueAt       DateTime  @default(now())
+  reviewCount Int       @default(0)
+  lapses      Int       @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  @@id([userId, flashcardId])
+}
+
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model UserBadge {
+  userId    String
+  code      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  awardedAt DateTime @default(now())
+
+  @@id([userId, code])
+}
+
+model StudentGoal {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  targetScore  Int
+
+  @@unique([userId, evaluationId])
+}
+
+model Plan {
+  id               String         @id @default(cuid())
+  code             String         @unique
+  name             String
+  description      String
+  priceCents       Int
+  commitmentMonths Int            @default(0)
+  terms            String
+  active           Boolean        @default(true)
+  order            Int            @default(0)
+  updatedAt        DateTime       @updatedAt
+  subscriptions    Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  parentId             String
+  parent               User               @relation("SubscriptionParent", fields: [parentId], references: [id], onDelete: Cascade)
+  studentId            String
+  student              User               @relation("SubscriptionStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus @default(PENDING)
+  priceCents           Int
+  stripeSubscriptionId String?            @unique
+  stripeCheckoutId     String?            @unique
+  startedAt            DateTime?
+  currentPeriodEnd     DateTime?
+  commitmentEndsAt     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  manualGrant          Boolean            @default(false)
+  manualNote           String?
+  withdrawalWaived     Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  payments             Payment[]
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  subscriptionId    String?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  parentId          String?       // conservé sans identité après effacement RGPD (obligation comptable)
+  parent            User?         @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  stripeInvoiceId   String?       @unique
+  stripePaymentRef  String?
+  amountCents       Int
+  refundedCents     Int           @default(0)
+  status            PaymentStatus
+  invoiceUrl        String?
+  invoicePdf        String?
+  failureMessage    String?
+  createdAt         DateTime      @default(now())
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+model Consent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // CGV | PRIVACY | WITHDRAWAL_WAIVER | AI_PROCESSING
+  version   String
+  createdAt DateTime @default(now())
+  ip        String?
+}
+
+model DataRequest {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        DataRequestType
+  status      DataRequestStatus @default(OPEN)
+  message     String?
+  response    String?
+  createdAt   DateTime          @default(now())
+  handledAt   DateTime?
+}
+
+model AiGeneration {
+  id           String     @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  kind         String     // ANALYSIS | MEMO | FLASHCARDS | EXERCISES | MOCK_EXAM
+  status       String     // RUNNING | DONE | ERROR
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  summary      Json?
+  error        String?
+  createdById  String?
+  createdAt    DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  path      String?
+  digest    String?
+  createdAt DateTime @default(now())
+}
