@@ -2,71 +2,519 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Révisions+</title>
  
 <style>
+ 
+:root{
+--bleu:#2563eb;
+--fond:#f4f7fb;
+--card:#ffffff;
+--vert:#22c55e;
+--orange:#f59e0b;
+--rouge:#ef4444;
+}
+ 
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,Arial,sans-serif;
+}
+ 
 body{
-font-family:Arial,sans-serif;
-background:#f4f7fb;
-text-align:center;
-padding:50px;
+background:var(--fond);
+}
+ 
+header{
+background:#0f172a;
+color:white;
+padding:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+ 
+.logo{
+font-size:24px;
+font-weight:700;
+}
+ 
+.user{
+background:#1e293b;
+padding:10px 15px;
+border-radius:10px;
+}
+ 
+.layout{
+display:flex;
+min-height:100vh;
+}
+ 
+.sidebar{
+width:250px;
+background:white;
+border-right:1px solid #ddd;
+padding:20px;
+}
+ 
+.menu{
+padding:12px;
+cursor:pointer;
+border-radius:10px;
+margin-bottom:8px;
+font-weight:600;
+}
+ 
+.menu:hover{
+background:#eff6ff;
+}
+ 
+.menu.active{
+background:#dbeafe;
+color:#2563eb;
+}
+ 
+.content{
+flex:1;
+padding:30px;
+}
+ 
+.page{
+display:none;
+}
+ 
+.page.active{
+display:block;
 }
  
 .card{
 background:white;
-max-width:700px;
-margin:auto;
-padding:30px;
-border-radius:20px;
-box-shadow:0 0 15px rgba(0,0,0,0.1);
+border-radius:16px;
+padding:25px;
+margin-bottom:20px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
 }
  
-button{
-background:#2563eb;
+h1{
+margin-bottom:10px;
+}
+ 
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+ 
+.stat{
+background:white;
+padding:20px;
+border-radius:16px;
+box-shadow:0 5px 15px rgba(0,0,0,.05);
+}
+ 
+.big{
+font-size:36px;
+font-weight:700;
+color:var(--bleu);
+}
+ 
+.progress{
+height:15px;
+background:#e5e7eb;
+border-radius:50px;
+overflow:hidden;
+margin-top:10px;
+}
+ 
+.fill{
+height:100%;
+width:89%;
+background:var(--vert);
+}
+ 
+.button{
+background:var(--bleu);
 color:white;
-border:none;
 padding:12px 20px;
-border-radius:8px;
+border:none;
+border-radius:10px;
 cursor:pointer;
-font-size:16px;
 }
  
-#message{
-margin-top:20px;
-font-size:20px;
-font-weight:bold;
-color:#2563eb;
+.flashcard{
+background:white;
+height:250px;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+font-size:28px;
+font-weight:700;
+border-radius:20px;
+cursor:pointer;
+box-shadow:0 8px 20px rgba(0,0,0,.08);
 }
+ 
+.answer{
+display:block;
+width:100%;
+padding:15px;
+margin-bottom:10px;
+border:2px solid #ddd;
+background:white;
+border-radius:10px;
+cursor:pointer;
+text-align:left;
+}
+ 
+.good{
+background:#dcfce7;
+}
+ 
+.bad{
+background:#fee2e2;
+}
+ 
 </style>
- 
 </head>
  
 <body>
  
+<header>
+<div class="logo">📚 Révisions+</div>
+<div class="user">Bonjour Salima</div>
+</header>
+ 
+<div class="layout">
+ 
+<div class="sidebar">
+ 
+<div class="menu active" onclick="showPage('dashboard',this)">
+🏠 Tableau de bord
+</div>
+ 
+<div class="menu" onclick="showPage('flashcards',this)">
+📇 Flashcards
+</div>
+ 
+<div class="menu" onclick="showPage('quiz',this)">
+📝 QCM
+</div>
+ 
+<div class="menu" onclick="showPage('teacher',this)">
+👩‍🏫 Enseignant
+</div>
+ 
+</div>
+ 
+<div class="content">
+ 
+<div id="dashboard" class="page active">
+ 
 <div class="card">
+<h1>Byzance et l'Europe Carolingienne</h1>
+<p>Progression du chapitre</p>
  
-<h1>📚 Révisions+</h1>
+<div class="progress">
+<div class="fill"></div>
+</div>
  
-<h2>Bienvenue Salima 🎉</h2>
- 
-<p>
-Votre plateforme de révision est maintenant en ligne.
+<p style="margin-top:15px;">
+89 % maîtrisé
 </p>
+</div>
  
-<button onclick="showMessage()">
-Tester l'interactivité
+<div class="stats">
+ 
+<div class="stat">
+<div class="big">48</div>
+Flashcards maîtrisées
+</div>
+ 
+<div class="stat">
+<div class="big">18/20</div>
+Meilleur score
+</div>
+ 
+<div class="stat">
+<div class="big">3</div>
+Notions à revoir
+</div>
+ 
+</div>
+ 
+</div>
+<div id="flashcards" class="page">
+ 
+<div class="card">
+<h1>📇 Flashcards</h1>
+<p>Clique sur la carte pour afficher la réponse.</p>
+ 
+<div id="flashcard" class="flashcard" onclick="flipCard()">
+BASILEUS
+</div>
+ 
+<br>
+ 
+<button class="button" onclick="nextCard()">
+Carte suivante
 </button>
  
-<div id="message"></div>
+</div>
+ 
+</div>
+ 
+<div id="quiz" class="page">
+ 
+<div class="card">
+ 
+<h1>📝 Quiz H1</h1>
+ 
+<div id="quizArea"></div>
+ 
+<h3 style="margin-top:20px;">
+Score :
+<span id="score">0</span>
+</h3>
+ 
+</div>
+ 
+</div>
+ 
+<div id="teacher" class="page">
+ 
+<div class="card">
+ 
+<h1>👩‍🏫 Espace enseignant</h1>
+ 
+<p>Chapitres disponibles :</p>
+ 
+<br>
+ 
+<ul>
+<li>✅ H1 - Byzance et Europe Carolingienne</li>
+<li>✅ H2 - L'expansion musulmane</li>
+<li>✅ H3 - Société féodale</li>
+</ul>
+ 
+<br>
+ 
+<button class="button">
+Ajouter un chapitre
+</button>
+ 
+</div>
+ 
+<div class="card">
+ 
+<h2>Analyse de classe</h2>
+ 
+<br>
+ 
+<p>Notions les mieux maîtrisées :</p>
+ 
+<ul>
+<li>Charlemagne</li>
+<li>Constantinople</li>
+<li>Justinien</li>
+</ul>
+ 
+<br>
+ 
+<p>Notions à retravailler :</p>
+ 
+<ul>
+<li>Schisme</li>
+<li>Église orthodoxe</li>
+<li>Patriarche</li>
+</ul>
+ 
+</div>
+ 
+</div>
  
 </div>
  
 <script>
-function showMessage(){
-document.getElementById("message").innerHTML =
-"✅ Bravo ! Votre premier site fonctionne.";
+ 
+function showPage(id,element){
+ 
+document
+.querySelectorAll('.page')
+.forEach(p=>p.classList.remove('active'));
+ 
+document
+.getElementById(id)
+.classList.add('active');
+ 
+document
+.querySelectorAll('.menu')
+.forEach(m=>m.classList.remove('active'));
+ 
+element.classList.add('active');
+ 
 }
+ 
+const flashcards=[
+ 
+["BASILEUS","Titre de l'empereur byzantin"],
+ 
+["PAÏEN","Personne croyant en plusieurs dieux"],
+ 
+["SCHISME","Séparation entre Église catholique et orthodoxe"],
+ 
+["MISSI DOMINICI","Envoyés de Charlemagne"]
+];
+ 
+let flashIndex=0;
+let flipped=false;
+ 
+function flipCard(){
+ 
+const card=document.getElementById("flashcard");
+ 
+if(flipped){
+ 
+card.innerHTML=
+flashcards[flashIndex][0];
+ 
+}else{
+ 
+card.innerHTML=
+flashcards[flashIndex][1];
+ 
+}
+ 
+flipped=!flipped;
+ 
+}
+ 
+function nextCard(){
+ 
+flashIndex++;
+ 
+if(flashIndex>=flashcards.length){
+ 
+flashIndex=0;
+ 
+}
+ 
+flipped=false;
+ 
+document.getElementById("flashcard")
+.innerHTML=
+flashcards[flashIndex][0];
+ 
+}
+const quiz=[
+ 
+{
+q:"Quelle est la capitale de l'Empire byzantin ?",
+a:[
+"Rome",
+"Athènes",
+"Constantinople",
+"Jérusalem"
+],
+c:2
+},
+ 
+{
+q:"Quelle est la capitale de l'Empire carolingien ?",
+a:[
+"Paris",
+"Aix-la-Chapelle",
+"Rome",
+"Lyon"
+],
+c:1
+},
+ 
+{
+q:"Qui surveille les comtes ?",
+a:[
+"Le pape",
+"Les missi dominici",
+"Les évêques",
+"Les moines"
+],
+c:1
+},
+ 
+{
+q:"Quel est le titre de l'empereur byzantin ?",
+a:[
+"Comte",
+"Basileus",
+"Patriarche",
+"Auguste"
+],
+c:1
+}
+ 
+];
+ 
+let question=0;
+let score=0;
+ 
+function loadQuiz(){
+ 
+if(question>=quiz.length){
+ 
+document.getElementById("quizArea").innerHTML=`
+<h2>🎉 Contrôle terminé</h2>
+<p>Votre score :</p>
+<h1>${score}/${quiz.length}</h1>
+<p>Continuez vos révisions pour progresser.</p>
+`;
+ 
+return;
+ 
+}
+ 
+const q=quiz[question];
+ 
+let html=`<h2>${q.q}</h2><br>`;
+ 
+q.a.forEach((rep,index)=>{
+ 
+html+=`
+<button
+class="answer"
+onclick="answer(${index})">
+${rep}
+</button>
+`;
+ 
+});
+ 
+document.getElementById("quizArea").innerHTML=html;
+ 
+}
+ 
+function answer(index){
+ 
+if(index===quiz[question].c){
+ 
+score++;
+ 
+document.getElementById("score")
+.innerHTML=score;
+ 
+}
+ 
+question++;
+ 
+loadQuiz();
+ 
+}
+ 
+loadQuiz();
+ 
 </script>
  
 </body>
+ 
 </html>
