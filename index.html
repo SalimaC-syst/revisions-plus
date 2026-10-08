@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Révisions+</title>
+ 
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#f4f7fb;
+text-align:center;
+padding:50px;
+}
+ 
+.card{
+background:white;
+max-width:700px;
+margin:auto;
+padding:30px;
+border-radius:20px;
+box-shadow:0 0 15px rgba(0,0,0,0.1);
+}
+ 
+button{
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+}
+ 
+#message{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+color:#2563eb;
+}
+</style>
+ 
+</head>
+ 
+<body>
+ 
+<div class="card">
+ 
+<h1>📚 Révisions+</h1>
+ 
+<h2>Bienvenue Salima 🎉</h2>
+ 
+<p>
+Votre plateforme de révision est maintenant en ligne.
+</p>
+ 
+<button onclick="showMessage()">
+Tester l'interactivité
+</button>
+ 
+<div id="message"></div>
+ 
+</div>
+ 
+<script>
+function showMessage(){
+document.getElementById("message").innerHTML =
+"✅ Bravo ! Votre premier site fonctionne.";
+}
+</script>
+ 
+</body>
+</html>
