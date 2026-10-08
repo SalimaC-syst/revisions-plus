@@ -1,0 +1,25 @@
+# Démarrage complet sur un serveur (préproduction ou production) :
+#   cp .env.example .env  (compléter)  puis  docker compose up -d --build
+#   docker compose exec app npx tsx prisma/seed.ts   (première installation)
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: revisions
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD}
+      POSTGRES_DB: revisions
+    volumes: [dbdata:/var/lib/postgresql/data]
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://revisions:${POSTGRES_PASSWORD}@db:5432/revisions
+      STORAGE_DIR: /data/storage
+    volumes: [storage:/data/storage]
+    ports: ["127.0.0.1:3000:3000"]   # derrière un proxy HTTPS (Caddy, Nginx…)
+    depends_on: [db]
+volumes:
+  dbdata:
+  storage:
