@@ -40,6 +40,7 @@ Comptes de démonstration créés par `SEED_DEMO=1` :
 
 ## Documentation
 
+- [Mettre en ligne pas à pas (Clever Cloud)](docs/MISE-EN-LIGNE.md)
 - [Installation, hébergement et maintenance](docs/INSTALLATION.md)
 - [Guide de l'administrateur et des enseignants](docs/GUIDE-ADMIN.md)
 - [Rapport de test](docs/RAPPORT-DE-TEST.md)

@@ -15,7 +15,9 @@ export const ALLOWED_MIME: Record<string, string> = {
   "text/plain": "txt",
 };
 
-const root = () => path.resolve(process.env.STORAGE_DIR ?? "./storage");
+// Le serveur de production (standalone) change de dossier courant au démarrage :
+// un chemin relatif est donc résolu depuis le dossier où `npm start` a été lancé.
+const root = () => path.resolve(process.env.INIT_CWD ?? process.env.PWD ?? process.cwd(), process.env.STORAGE_DIR ?? "./storage");
 
 /** Vérifie la signature binaire réelle du fichier (et pas seulement l'extension). */
 export function sniffMime(buf: Buffer, declared: string): string | null {

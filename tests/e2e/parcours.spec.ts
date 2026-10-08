@@ -180,6 +180,7 @@ test("une évaluation dépubliée disparaît pour l'élève, un enseignant ne pe
   const admin = await login(browser, "admin@demo.local", "Demo-Admin-2026");
   await admin.goto("/admin/evaluations");
   await admin.getByRole("link", { name: /Byzance et l'Europe carolingienne/ }).first().click();
+  await admin.waitForURL(/\/admin\/evaluations\/[^/]+$/);
   const evalAdminUrl = admin.url();
   await admin.getByRole("button", { name: "Dépublier" }).click();
   await expect(admin.getByRole("button", { name: "Publier" })).toBeVisible();
@@ -192,10 +193,20 @@ test("une évaluation dépubliée disparaît pour l'élève, un enseignant ne pe
 
   const prof = await login(browser, "prof.histoire@demo.local", "Demo-Prof-2026");
   await prof.goto(evalAdminUrl);
-  await expect(prof.getByRole("button", { name: "Publier" })).toHaveCount(0);
+  await expect(prof.getByRole("heading", { name: /Byzance/ })).toBeVisible(); // l'enseignant voit bien l'évaluation…
+  await expect(prof.getByRole("button", { name: "Publier" })).toHaveCount(0); // …sans pouvoir la publier
 
   await admin.getByRole("button", { name: "Publier" }).click();
   await expect(admin.getByRole("button", { name: "Dépublier" })).toBeVisible();
+
+  // import d'un document de cours : stocké dans le dossier privé, puis relu par le lien autorisé
+  await admin.goto(evalAdminUrl + "/documents");
+  await admin.getByLabel("Fichiers").setInputFiles({ name: "cours-byzance.txt", mimeType: "text/plain", buffer: Buffer.from("Constantinople, capitale de l'Empire byzantin.") });
+  await admin.getByRole("button", { name: "Importer" }).click();
+  await expect(admin.locator(".alert-ok")).toBeVisible();
+  const fs = await import("node:fs");
+  const stored = fs.readdirSync("storage-e2e", { recursive: true }).map(String);
+  expect(stored.some((f) => !fs.statSync(`storage-e2e/${f}`).isDirectory())).toBe(true);
   await s.reload();
   await expect(s.getByRole("link", { name: /Byzance/ })).toBeVisible();
 });

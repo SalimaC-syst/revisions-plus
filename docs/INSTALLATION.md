@@ -13,6 +13,7 @@ Chaque environnement a son propre fichier `.env`, sa propre base et son propre d
 ## 2. Hébergement recommandé
 
 - **Dans l'Union européenne** (données de mineurs). Par exemple : Scaleway, OVHcloud, Clever Cloud ou un serveur virtuel (VPS) en France. PostgreSQL managé de préférence.
+- Pas à pas recommandé : [Mettre en ligne sur Clever Cloud](MISE-EN-LIGNE.md).
 - **HTTPS obligatoire**, par exemple avec Caddy ou Nginx et un certificat Let's Encrypt devant le port 3000.
 - Ressources minimales : 1 vCPU, 2 Go de RAM, 20 Go de disque.
 
