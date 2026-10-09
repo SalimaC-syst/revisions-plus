@@ -2,6 +2,7 @@
 // Aucune donnée bancaire ne transite ni n'est stockée par la plateforme.
 import Stripe from "stripe";
 import { prisma } from "./db";
+import { getSetting } from "./settings";
 
 let client: Stripe | null = null;
 export function stripeClient(): Stripe | null {
@@ -44,6 +45,7 @@ export async function createCheckout(opts: {
   const stripe = stripeClient();
   if (!stripe) throw new Error("Paiement en ligne non configuré.");
   const customer = await ensureCustomer(stripe, opts.parent);
+  const { shortName } = await getSetting("branding");
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer,
@@ -54,7 +56,7 @@ export async function createCheckout(opts: {
         currency: "eur",
         unit_amount: opts.plan.priceCents,
         recurring: { interval: "month" },
-        product_data: { name: `Révisions Saint-Joseph — ${opts.plan.name} (${opts.studentName})` },
+        product_data: { name: `${shortName} — ${opts.plan.name} (${opts.studentName})` },
       },
     }],
     metadata: { subscriptionId: opts.subscriptionId },

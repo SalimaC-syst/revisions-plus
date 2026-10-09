@@ -97,7 +97,7 @@ Ces deux dernières lignes servent uniquement à créer **votre compte de super-
 ### Étape 7. Vérifier
 
 1. Ouvrez `https://[votre-adresse].cleverapps.io/api/health`. Vous devez lire `{"status":"ok"}`.
-2. Ouvrez `https://[votre-adresse].cleverapps.io` : la page d'accueil de Révisions Saint-Joseph s'affiche.
+2. Ouvrez `https://[votre-adresse].cleverapps.io` : la page d'accueil de Révisions+ s'affiche.
 
 ### Étape 8. Première connexion et sécurité
 
