@@ -7,7 +7,7 @@ export type Features = { aiGenerationEnabled: boolean; aiGradingEnabled: boolean
 export const DEFAULTS = {
   branding: {
     schoolName: "Collège Saint-Joseph d'Argenteuil",
-    shortName: "Révisions Saint-Joseph",
+    shortName: "Révisions+",
     tagline: "Comprendre, mémoriser, s'entraîner, réussir",
     primary: "#1f3a68",
     accent: "#d99a1e",
